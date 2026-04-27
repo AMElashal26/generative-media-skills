@@ -66,6 +66,21 @@ export GENERATIVE_MEDIA_SKILLS_ROOT=/path/to/generative-media-skills
 
 When kept inside this repository, scripts auto-detect the parent directory.
 
+## Runtime configuration
+
+The scripts are intentionally environment-light so they can run inside this
+monorepo or after `social-media-engine/` is split into its own repository.
+
+| Setting | Used by | Default | When to set it |
+| --- | --- | --- | --- |
+| `GENERATIVE_MEDIA_SKILLS_ROOT` | `generate-video.sh` through `lib.sh` | Parent directory of `social-media-engine/` | Set this after extracting the engine into a separate repository. |
+| `SOCIAL_ENGINE_CAMPAIGNS_DIR` | All campaign scripts through `lib.sh` | `social-media-engine/campaigns` | Set this for smoke tests, CI, or shared runtime state outside the repo. |
+| `MUAPI_KEY` | Parent social video skill when `--run` is used | None | Required only for real media generation. Planned runs, packaging, exports, and metrics imports do not need it. |
+
+Platform defaults are local data, not remote API state. Add or edit platforms in
+`config/platforms.json`, then use `ensure_platform_exists` validation by running
+the lifecycle smoke test below.
+
 ## Lifecycle
 
 ### 1. Initialize a campaign
@@ -197,6 +212,10 @@ Why this matters:
 - A human can upload from the queue.
 - Future publisher adapters can read the queue without changing generation.
 
+Queue files are snapshots. If package metadata changes after export, run
+`export-queue.sh` again to create a new queue entry rather than editing an old
+queue file in place.
+
 ### 6. Import metrics
 
 After publishing manually or through a future adapter, export platform metrics to
@@ -284,6 +303,101 @@ Recommended practice:
 - Keep raw platform exports in `metrics/` instead of only entering summaries.
 - Use notes for qualitative context that numbers do not capture.
 - Compare creative variables: hook family, visual motif, CTA, duration, platform.
+
+## Data contracts
+
+These files are the public interface between the engine, agents, manual
+operators, and future publisher adapters.
+
+### Campaign record
+
+`campaign.json` is created by `init-campaign.sh` and must include:
+
+- `campaign_id`: lowercase letters, numbers, dots, underscores, or hyphens.
+- `name`, `objective`, `platforms`, and `created_at`.
+- Optional `notes`, `brand_files`, and cadence or creative metadata.
+
+The schema is intentionally permissive (`additionalProperties: true`) so teams
+can attach brand, client, or schedule metadata without changing scripts.
+
+### Manifest ledger
+
+`manifest.jsonl` is append-only. Each line is one JSON object with the shared
+fields from `schemas/manifest-entry.schema.json`:
+
+- `run_id`, `timestamp`, `campaign_id`, `kind`, and `status`.
+- Optional linkage fields such as `platform`, `source_run_id`, `prompt`,
+  `command`, `outputs`, `package`, `metrics`, and `notes`.
+
+Current `kind` values are `campaign_initialized`, `video_generation`,
+`package`, `export_queue`, `metrics`, and `note`. Scripts read the ledger with
+`jq -s`, so keep each event on a single valid JSON line.
+
+### Package files
+
+`build-package.sh` writes `packages/<package_id>_<platform>.json`. A package
+contains:
+
+- `media`: source prompt plus `video_url` or `local_file` when available.
+- `upload`: title, caption, description, hashtags, CTA, thumbnail prompt,
+  alt text, post text, sound note, and reply prompt.
+- `platform_defaults`: aspect ratio, duration, and safe-zone text copied from
+  `config/platforms.json`.
+- `status: "ready_for_export"`.
+
+Hashtags can be passed as comma-separated or space-separated text; the script
+normalizes them to an array.
+
+### Queue files
+
+`export-queue.sh` writes `queue/<queue_id>.json` with:
+
+- `status: "ready_for_manual_publish"`.
+- `items[]`, where each item includes the original `package_file` path and the
+  package JSON content.
+- Optional `platform`; it is `null` when exporting all package files.
+
+Publisher adapters should consume queue files or package files, then append a
+new manifest event instead of mutating existing package or queue records.
+
+## Extension points
+
+### Add a platform
+
+1. Add a key to `config/platforms.json` with `label`, `aspect`,
+   `duration_seconds`, `format`, `safe_zone`, `package_fields`, and
+   `publishing`.
+2. If real generation should use a matching default, update the platform case in
+   `library/social/social-media-video/scripts/run-social-video.sh`.
+3. Run the no-credit smoke test with `--platform <new-platform>`.
+
+The engine can package any platform present in `config/platforms.json`, but the
+parent social video skill owns generation defaults.
+
+### Add a publisher adapter
+
+Keep publishing separate from generation:
+
+1. Read a queue file from `campaigns/<campaign-id>/queue/`.
+2. Upload using the platform API and credentials outside this engine.
+3. Append a new manifest event with `kind: "note"` or a future publisher kind,
+   including published URLs, account IDs, and API response references.
+
+Do not make `generate-video.sh` depend on OAuth, token refresh, or platform
+quota; those concerns belong in publisher adapters.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `jq is required` | `jq` is not installed or not on `PATH`. | Install `jq` before running any engine script. |
+| `Campaign '<id>' does not exist` | A lifecycle step ran before initialization or with a different campaigns directory. | Run `init-campaign.sh` first, or check `SOCIAL_ENGINE_CAMPAIGNS_DIR`. |
+| `Unknown platform` | The platform key is missing from `config/platforms.json`. | Add the platform defaults or use an existing key such as `instagram`, `youtube-short`, `tiktok`, `threads`, or `linkedin`. |
+| `Social video script not found` | The engine cannot locate the parent skills repo. | Set `GENERATIVE_MEDIA_SKILLS_ROOT` to the `generative-media-skills` checkout. |
+| `MUAPI_KEY is not set` | `generate-video.sh --run` delegated to the parent skill without credentials. | Configure `MUAPI_KEY` or omit `--run` for a planned ledger entry. |
+| `No video_generation manifest entry found` | Packaging ran before planning or executing a generation. | Run `generate-video.sh` first, then package the resulting `run_id`. |
+| `No package files found` | Queue export ran before package creation, or the platform filter excluded all packages. | Run `build-package.sh`, or retry export without `--platform` to inspect all packages. |
+| Performance summary totals are zero | Metrics were not imported, or metric values are non-numeric strings. | Import a JSON metrics file with numeric `views`, `likes`, `comments`, `shares`, and `saves` fields. |
 
 ## Testing
 
