@@ -68,7 +68,7 @@ bash social-media-engine/scripts/summarize-performance.sh \
   --campaign-id coldbrew-launch
 ```
 
-For the full operating model, see `[GUIDE.md](./GUIDE.md)`.
+For the full operating model, see [GUIDE.md](./GUIDE.md).
 
 ## Design goals
 
