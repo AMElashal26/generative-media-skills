@@ -1,0 +1,47 @@
+{
+  "instagram": {
+    "label": "Instagram Reels",
+    "aspect": "9:16",
+    "duration_seconds": 10,
+    "format": "vertical_short",
+    "safe_zone": "Keep critical text, faces, logos, and CTAs away from the bottom 25% and right-side interaction rail.",
+    "package_fields": ["caption", "hashtags", "cta", "thumbnail_prompt"],
+    "publishing": "export"
+  },
+  "youtube-short": {
+    "label": "YouTube Shorts",
+    "aspect": "9:16",
+    "duration_seconds": 15,
+    "format": "vertical_short",
+    "safe_zone": "Keep title-like text centered; avoid lower UI overlays. Include #Shorts in title or description when useful.",
+    "package_fields": ["title", "description", "hashtags", "thumbnail_prompt"],
+    "publishing": "export"
+  },
+  "tiktok": {
+    "label": "TikTok",
+    "aspect": "9:16",
+    "duration_seconds": 10,
+    "format": "vertical_short",
+    "safe_zone": "Keep hook text high-center and leave bottom/right UI space clear.",
+    "package_fields": ["caption", "hashtags", "sound_note", "cta"],
+    "publishing": "export"
+  },
+  "threads": {
+    "label": "Threads",
+    "aspect": "9:16",
+    "duration_seconds": 10,
+    "format": "text_plus_media",
+    "safe_zone": "Lead with the written hook; media should work as context even without sound.",
+    "package_fields": ["post_text", "hashtags", "alt_text", "reply_prompt"],
+    "publishing": "export"
+  },
+  "linkedin": {
+    "label": "LinkedIn",
+    "aspect": "16:9",
+    "duration_seconds": 10,
+    "format": "professional_video",
+    "safe_zone": "Use readable centered text and avoid dense captions.",
+    "package_fields": ["post_text", "hashtags", "cta"],
+    "publishing": "export"
+  }
+}
