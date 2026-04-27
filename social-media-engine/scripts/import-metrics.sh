@@ -65,13 +65,13 @@ jq -n \
       kind: "metrics",
       status: "completed",
       platform: $platform,
-      source_run_id: ($source_run_id | select(length > 0)),
       metrics: $metrics[0],
       outputs: {
         metrics_file: $metrics_file
-      },
-      notes: ($notes | select(length > 0))
-    }' > "$ENTRY_FILE"
+      }
+    }
+    + (if $source_run_id == "" then {} else {source_run_id: $source_run_id} end)
+    + (if $notes == "" then {} else {notes: $notes} end)' > "$ENTRY_FILE"
 
 append_manifest_entry "$CAMPAIGN_ID" "$ENTRY_FILE"
 rm -f "$ENTRY_FILE"
