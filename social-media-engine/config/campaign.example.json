@@ -1,0 +1,21 @@
+{
+  "campaign_id": "coldbrew-launch",
+  "name": "Cold Brew Launch",
+  "objective": "Generate daily short-form launch assets.",
+  "platforms": ["instagram", "youtube-short", "tiktok", "threads"],
+  "brand_files": {
+    "brand_identity": "brand/brand-identity.md",
+    "icp": "brand/ICP.md",
+    "messaging": "brand/messaging.md"
+  },
+  "cadence": {
+    "mode": "manual",
+    "notes": "Use the ledger to generate successive episodes or variants."
+  },
+  "creative_system": {
+    "series_premise": "A premium cold brew brand reveals product details through cinematic macro scenes.",
+    "visual_motifs": ["black marble", "gold highlights", "condensation", "slow product orbit"],
+    "hook_families": ["problem-solution", "sensory detail", "premium ritual"],
+    "cta": "Try the launch blend."
+  }
+}

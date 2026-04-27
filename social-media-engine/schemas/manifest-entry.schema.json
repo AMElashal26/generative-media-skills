@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/social-media-engine/manifest-entry.schema.json",
+  "title": "Social Media Engine Manifest Entry",
+  "type": "object",
+  "required": ["run_id", "timestamp", "campaign_id", "kind", "status"],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "Unique ID for this ledger event."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "campaign_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["campaign_initialized", "video_generation", "package", "export_queue", "metrics", "note"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "queued", "running", "completed", "failed", "exported", "published"]
+    },
+    "platform": {
+      "type": "string"
+    },
+    "source_run_id": {
+      "type": "string"
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "command": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}
