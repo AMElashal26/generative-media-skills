@@ -21,7 +21,7 @@ A high-performance, schema-driven architecture for AI agents to generate, edit, 
 
 ## 🏗️ Scalable Architecture
 
-This repository uses a **Core/Library** split to ensure efficiency and high-signal discovery for LLMs:
+This repository uses a **Core/Library/Engine** split to ensure efficiency and high-signal discovery for LLMs:
 
 ### ⚙️ Core Primitives (`/core`)
 
@@ -36,10 +36,43 @@ Thin wrappers around `[muapi-cli](https://github.com/SamurAIGPT/muapi-cli)` for 
 High-value skills that translate creative intent into technical directives.
 
 - **Cinema Director** (`/library/motion/cinema-director/`) — Technical film direction & cinematography.
+- **Seedance 2 (Doubao Video)** (`/library/motion/seedance-2/`) — Director-level cinematic video generation with text-to-video, image-to-video, and video extension with native audio-video sync.
 - **Nano-Banana** (`/library/visual/nano-banana/`) — Reasoning-driven image generation (Gemini 3 Style).
 - **UI Designer** (`/library/visual/ui-design/`) — High-fidelity mobile/web mockups (Atomic Design).
 - **Logo Creator** (`/library/visual/logo-creator/`) — Minimalist vector branding (Geometric Primitives).
-- **Seedance 2 (Doubao Video)** (`/library/motion/seedance-2/`) — Director-level cinematic video generation with text-to-video, image-to-video, and video extension with native audio-video sync.
+- **Photo Pack Generator** (`/library/visual/photo-pack-generator/`) — Multi-image photo pack generation workflows.
+- **Social Media Video** (`/library/social/social-media-video/`) — Brand-aware short-form video workflow that reads brand files, writes storyboards, and invokes Seedance 2.0.
+- **Workflow** (`/library/workflow/`) — Cross-skill workflow guidance for composing the primitives and expert skills.
+
+### 📣 Social Media Engine (`/social-media-engine`)
+
+An orchestration layer for continuous social campaigns. It creates campaign
+state, records planned or executed video generation in `manifest.jsonl`, builds
+platform upload packages, exports manual publishing queues, and imports metrics
+for the next iteration.
+
+Use it when you need campaign memory and platform packaging around the
+generation skills:
+
+```bash
+bash social-media-engine/scripts/init-campaign.sh \
+  --campaign-id coldbrew-launch \
+  --name "Cold Brew Launch" \
+  --objective "Generate short-form launch assets" \
+  --platforms instagram,youtube-short,tiktok,threads
+
+bash social-media-engine/scripts/generate-video.sh \
+  --campaign-id coldbrew-launch \
+  --platform instagram \
+  --camera product \
+  --prompt "0-3s: macro bottle reveal; 3-7s: slow orbit; 7-10s: CTA hold"
+```
+
+By default, `generate-video.sh` records a planned run without spending MuAPI
+credits. Add `--run` only when `MUAPI_KEY` is configured and you intend to call
+the parent social video skill. See
+[`social-media-engine/GUIDE.md`](./social-media-engine/GUIDE.md) for the full
+operating runbook.
 
 ---
 

@@ -42,6 +42,7 @@ bash social-media-engine/scripts/generate-video.sh \
   --campaign-id coldbrew-launch \
   --platform instagram \
   --camera product \
+  --duration 10 \
   --prompt "0-3s: macro cold brew bottle reveal on black marble..."
 
 # 3. Build platform upload packages from the latest manifest entry
@@ -69,6 +70,37 @@ bash social-media-engine/scripts/summarize-performance.sh \
 ```
 
 For the full operating model, see [GUIDE.md](./GUIDE.md).
+
+## Generation command behavior
+
+`generate-video.sh` is a ledger-first wrapper around
+`library/social/social-media-video/scripts/run-social-video.sh`.
+
+- Without `--run`, it appends a `video_generation` entry with
+  `status: "planned"` and the exact command that would run.
+- With `--run`, it executes the parent social video skill and records
+  `status: "completed"` or `status: "failed"` plus the JSON or raw output.
+- Platform defaults for `--aspect` and `--duration` come from
+  `config/platforms.json` unless overridden.
+- Arguments after `--` are passed through to the parent social video script,
+  which supports reference-image options such as `--file`, `--gen-ref`,
+  `--gen-ref-last`, `--ref-model`, `--fast`, and `--view`.
+
+Common options:
+
+```bash
+bash social-media-engine/scripts/generate-video.sh \
+  --campaign-id coldbrew-launch \
+  --platform instagram \
+  --camera drone \
+  --mode i2v \
+  --tier global \
+  --quality high \
+  --aspect 9:16 \
+  --duration 11 \
+  --prompt "0-2s: aerial hook..." \
+  -- --file ./reference.jpg
+```
 
 ## Design goals
 
@@ -150,4 +182,11 @@ Defaults live in `config/platforms.json`. The current short-form baseline is
 - `jq`
 - The parent `generative-media-skills` repo or `GENERATIVE_MEDIA_SKILLS_ROOT`
 - `MUAPI_KEY` configured if actually generating media
+
+Optional environment variables:
+
+- `GENERATIVE_MEDIA_SKILLS_ROOT`: path to the parent skills repo when this
+  engine is split into its own repository.
+- `SOCIAL_ENGINE_CAMPAIGNS_DIR`: alternate campaign state directory, useful for
+  smoke tests or keeping runtime state outside the repo checkout.
 

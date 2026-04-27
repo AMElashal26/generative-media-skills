@@ -121,6 +121,39 @@ Why this matters:
 - Content calendars can be planned as ledger entries.
 - The exact eventual generation command is preserved.
 
+Generation options:
+
+| Option | Purpose | Default |
+| --- | --- | --- |
+| `--campaign-id` | Campaign ledger to append to. | Required |
+| `--platform` | Platform key from `config/platforms.json`. | `instagram` |
+| `--prompt`, `-p` | Seedance Director Brief passed to the social video skill. | Required |
+| `--camera` | Camera intent forwarded to `run-social-video.sh`. | Parent script default |
+| `--mode` | Seedance mode such as `t2v`, `i2v`, `first-last`, or `omni`. | Parent script default |
+| `--tier` | Seedance tier such as `chinese`, `global`, or `vip`. | Parent script default |
+| `--quality`, `-q` | Chinese-tier quality setting forwarded to Seedance. | Parent script default |
+| `--aspect` | Override the platform aspect ratio. | `config/platforms.json` |
+| `--duration` | Override the platform duration in seconds. | `config/platforms.json` |
+| `--run` | Execute generation instead of only recording the plan. | Planned only |
+| `--` | Pass all following args to `run-social-video.sh`. | None |
+
+Use `--` for parent skill options that are not first-class engine flags, such as
+reference images or generated reference frames:
+
+```bash
+bash social-media-engine/scripts/generate-video.sh \
+  --campaign-id coldbrew-launch \
+  --platform instagram \
+  --prompt "0-3s: product reveal..." \
+  --mode i2v \
+  --run \
+  -- --file ./media/coldbrew-reference.jpg --view
+```
+
+The engine always adds `--async` when it assembles the parent social video
+command. Executed runs therefore capture the parent generation response in the
+manifest without waiting for final media hydration.
+
 ### 3. Execute a generation
 
 Add `--run` when you want to call the parent media generation script.
@@ -284,6 +317,33 @@ Recommended practice:
 - Keep raw platform exports in `metrics/` instead of only entering summaries.
 - Use notes for qualitative context that numbers do not capture.
 - Compare creative variables: hook family, visual motif, CTA, duration, platform.
+
+## Configuration and environment
+
+### Platform defaults
+
+`config/platforms.json` defines the platforms accepted by engine scripts. Each
+entry supplies:
+
+- `aspect` and `duration_seconds` used by `generate-video.sh` unless overridden.
+- `safe_zone` guidance embedded into package output.
+- `package_fields` that describe the metadata expected by that platform.
+- `publishing`, currently set to `export` for manual queue-based publishing.
+
+Current platform keys are `instagram`, `youtube-short`, `tiktok`, `threads`, and
+`linkedin`. Use those exact keys with `--platform`.
+
+### Environment variables
+
+| Variable | Used by | Purpose |
+| --- | --- | --- |
+| `GENERATIVE_MEDIA_SKILLS_ROOT` | Engine scripts | Points a split-out engine repo at the parent `generative-media-skills` checkout. Not needed inside this monorepo. |
+| `SOCIAL_ENGINE_CAMPAIGNS_DIR` | Engine scripts | Overrides where runtime campaign state is written; useful for smoke tests and isolated runs. |
+| `MUAPI_KEY` | `library/social/social-media-video/scripts/run-social-video.sh` | Required only when `generate-video.sh --run` calls the parent social video skill. |
+
+`muapi auth configure` and MCP examples may use `MUAPI_API_KEY` for CLI setup,
+but this engine's executed social video path checks `MUAPI_KEY` or a `.env` file
+loaded from the skills root.
 
 ## Testing
 
