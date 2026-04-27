@@ -61,12 +61,14 @@ To inspect the feedback loop after importing metrics:
 ```bash
 bash social-media-engine/scripts/import-metrics.sh \
   --campaign-id coldbrew-launch \
-  --source manual \
-  --metrics-json '{"views":1200,"likes":87,"shares":14,"notes":"strong hook"}'
+  --platform instagram \
+  --metrics-file ./metrics/coldbrew-instagram.json
 
 bash social-media-engine/scripts/summarize-performance.sh \
   --campaign-id coldbrew-launch
 ```
+
+For the full operating model, see [GUIDE.md](./GUIDE.md).
 
 ## Design goals
 
@@ -120,9 +122,9 @@ This first version establishes the durable state needed for continuous series.
 The next layer can read `manifest.jsonl`, summarize previous posts, and generate
 episode briefs or variants before invoking `generate-video.sh`.
 
-`generate-video.sh --dry-run` records a planned generation entry without calling
-MuAPI. Use it to plan a content calendar or review platform packages before
-spending generation credits.
+`generate-video.sh` records a planned generation entry without calling MuAPI by
+default. Add `--run` only when you want to spend generation credits and capture
+the parent generation response in the ledger.
 
 ### Publisher layer
 
