@@ -66,6 +66,64 @@ export GENERATIVE_MEDIA_SKILLS_ROOT=/path/to/generative-media-skills
 
 When kept inside this repository, scripts auto-detect the parent directory.
 
+Runtime campaign state defaults to `social-media-engine/campaigns/`. For smoke
+tests, CI jobs, or local experiments that should not touch real campaign state,
+override it:
+
+```bash
+export SOCIAL_ENGINE_CAMPAIGNS_DIR="$(mktemp -d)/campaigns"
+```
+
+All scripts require `jq`. `generate-video.sh --run` also depends on the parent
+social video and Seedance scripts, so real generation needs `MUAPI_KEY`, `curl`,
+and `python3`; planned runs omit `--run` and do not spend credits.
+
+## Public script interfaces
+
+Run each script with `--help` for the latest usage. The table below summarizes
+the stable workflow surface documented by this guide.
+
+| Script | Required flags | Key optional flags | Writes |
+| --- | --- | --- | --- |
+| `init-campaign.sh` | `--campaign-id`, `--name`, `--objective` | `--platforms`, `--notes` | `campaign.json`, standard subdirectories, `campaign_initialized` manifest entry |
+| `generate-video.sh` | `--campaign-id`, `--prompt` | `--platform`, `--camera`, `--mode`, `--tier`, `--quality`, `--duration`, `--aspect`, `--run`, `-- ...` passthrough | `video_generation` manifest entry |
+| `build-package.sh` | `--campaign-id`, `--platform` | `--source-run-id`, upload fields such as `--caption`, `--hashtags`, `--title`, `--post-text`, `--alt-text`, `--cta` | package JSON and `package` manifest entry |
+| `export-queue.sh` | `--campaign-id` | `--platform` | queue JSON and `export_queue` manifest entry |
+| `import-metrics.sh` | `--campaign-id`, `--platform`, `--metrics-file` | `--source-run-id`, `--notes` | normalized metrics JSON and `metrics` manifest entry |
+| `summarize-performance.sh` | `--campaign-id` | none | summary JSON on stdout |
+
+### `generate-video.sh` passthrough
+
+`generate-video.sh` always assembles a command for
+`library/social/social-media-video/scripts/run-social-video.sh` with `--async`.
+Flags after `--` are forwarded to that parent script, which is useful when the
+engine should preserve the exact command but the parent skill owns the option.
+
+Common passthrough examples:
+
+```bash
+# Use an existing image reference for image-to-video.
+bash social-media-engine/scripts/generate-video.sh \
+  --campaign-id coldbrew-launch \
+  --platform instagram \
+  --prompt "Slow product orbit with condensation detail" \
+  --mode i2v \
+  -- --file ./brand/product-reference.jpg
+
+# Generate first and last frame references through the parent social skill.
+bash social-media-engine/scripts/generate-video.sh \
+  --campaign-id coldbrew-launch \
+  --platform youtube-short \
+  --prompt "Reveal from dark macro detail to full bottle hero shot" \
+  --tier global \
+  -- --gen-ref "Macro condensation on black marble" \
+     --gen-ref-last "Full cold brew bottle hero shot with gold rim light"
+```
+
+Do not pass `--view` during automation unless an interactive media viewer is
+available. The parent script only opens outputs on macOS, but the ledger command
+will still record the flag.
+
 ## Lifecycle
 
 ### 1. Initialize a campaign
@@ -284,6 +342,42 @@ Recommended practice:
 - Keep raw platform exports in `metrics/` instead of only entering summaries.
 - Use notes for qualitative context that numbers do not capture.
 - Compare creative variables: hook family, visual motif, CTA, duration, platform.
+
+## JSON contracts and constraints
+
+The durable contracts live in `schemas/` and are intentionally permissive for
+future fields. Treat the required fields as stable and keep optional data nested
+under the relevant entry:
+
+- `campaign.schema.json` requires `campaign_id`, `name`, `objective`,
+  `platforms`, and `created_at`. `init-campaign.sh` also enforces lowercase
+  campaign IDs with letters, numbers, dots, underscores, and hyphens.
+- `manifest-entry.schema.json` requires `run_id`, `timestamp`, `campaign_id`,
+  `kind`, and `status`. Current `kind` values include `campaign_initialized`,
+  `video_generation`, `package`, `export_queue`, `metrics`, and `note`.
+- Command lineage belongs in `command`, generator responses in `outputs`,
+  package payloads in `package`, metrics snapshots in `metrics`, and human
+  context in `notes`.
+
+Supported platform IDs come from `config/platforms.json`. The parent social
+video script supports additional names, but the engine validates against its own
+config first so packages and safe-zone guidance stay consistent.
+
+## Common pitfalls
+
+- **Planning vs. spending credits:** `generate-video.sh` writes a planned ledger
+  entry by default. It only calls MuAPI through the parent social video skill
+  when `--run` is passed.
+- **Campaign state location:** scripts write to `social-media-engine/campaigns/`
+  unless `SOCIAL_ENGINE_CAMPAIGNS_DIR` is set. Use the override for tests and CI.
+- **Platform drift:** adding a platform requires updating `config/platforms.json`
+  before `init-campaign.sh`, `generate-video.sh`, or `build-package.sh` can use
+  the new ID.
+- **Package source selection:** `build-package.sh` uses the latest
+  `video_generation` entry when `--source-run-id` is omitted. Pass
+  `--source-run-id` when packaging an older run or a specific variant.
+- **Automation viewers:** avoid `--view` in headless automation. It is only
+  useful when an interactive viewer is available.
 
 ## Testing
 

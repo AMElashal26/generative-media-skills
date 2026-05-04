@@ -21,7 +21,8 @@ A high-performance, schema-driven architecture for AI agents to generate, edit, 
 
 ## 🏗️ Scalable Architecture
 
-This repository uses a **Core/Library** split to ensure efficiency and high-signal discovery for LLMs:
+This repository uses a **Core/Library** split for media primitives and a small
+social operating layer for repeatable campaign workflows:
 
 ### ⚙️ Core Primitives (`/core`)
 
@@ -40,6 +41,19 @@ High-value skills that translate creative intent into technical directives.
 - **UI Designer** (`/library/visual/ui-design/`) — High-fidelity mobile/web mockups (Atomic Design).
 - **Logo Creator** (`/library/visual/logo-creator/`) — Minimalist vector branding (Geometric Primitives).
 - **Seedance 2 (Doubao Video)** (`/library/motion/seedance-2/`) — Director-level cinematic video generation with text-to-video, image-to-video, and video extension with native audio-video sync.
+
+### 📣 Social Media Engine (`/social-media-engine`)
+
+Campaign orchestration for continuous social media generation. The engine keeps
+durable campaign state, plans or executes social video runs through
+`library/social/social-media-video/`, builds platform upload packages, exports
+manual publishing queues, and imports metrics for the next creative iteration.
+
+- Start with [`social-media-engine/README.md`](social-media-engine/README.md)
+  for the workflow overview.
+- Use [`social-media-engine/GUIDE.md`](social-media-engine/GUIDE.md) for the
+  script interfaces, state layout, no-credit smoke test, and operational
+  guardrails.
 
 ---
 

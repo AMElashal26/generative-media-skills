@@ -92,6 +92,26 @@ campaigns/<campaign-id>/
   briefs/                reusable prompts, storyboards, and episode notes
 ```
 
+## Public interfaces
+
+The engine exposes shell scripts and JSON files rather than a long-running
+service. All scripts require `jq` and use `campaigns/<campaign-id>/manifest.jsonl`
+as the durable event stream.
+
+| Interface | Purpose | Writes |
+| --- | --- | --- |
+| `scripts/init-campaign.sh` | Creates campaign state and validates platform IDs. | `campaign.json`, standard subdirectories, `campaign_initialized` ledger entry |
+| `scripts/generate-video.sh` | Plans a social video command, or executes it with `--run`. | `video_generation` ledger entry |
+| `scripts/build-package.sh` | Creates platform-specific upload metadata from a generation entry. | `packages/*.json`, `package` ledger entry |
+| `scripts/export-queue.sh` | Collects package files for manual publishing. | `queue/*.json`, `export_queue` ledger entry |
+| `scripts/import-metrics.sh` | Copies a platform metrics export into campaign state. | `metrics/*.json`, `metrics` ledger entry |
+| `scripts/summarize-performance.sh` | Emits aggregate metrics and recent package context. | stdout only |
+
+Campaign and manifest records are described by `schemas/campaign.schema.json`
+and `schemas/manifest-entry.schema.json`. Platform defaults are configured in
+`config/platforms.json`; add or change supported platforms there before using
+them in scripts.
+
 ## Core systems
 
 ### Campaign ledger
