@@ -75,8 +75,8 @@ export SOCIAL_ENGINE_CAMPAIGNS_DIR="$(mktemp -d)/campaigns"
 ```
 
 All scripts require `jq`. `generate-video.sh --run` also depends on the parent
-social video skill and needs `MUAPI_KEY`; planned runs omit `--run` and do not
-spend credits.
+social video and Seedance scripts, so real generation needs `MUAPI_KEY`, `curl`,
+and `python3`; planned runs omit `--run` and do not spend credits.
 
 ## Public script interfaces
 
