@@ -285,6 +285,88 @@ Recommended practice:
 - Use notes for qualitative context that numbers do not capture.
 - Compare creative variables: hook family, visual motif, CTA, duration, platform.
 
+## Script interface reference
+
+All scripts are Bash entry points under `social-media-engine/scripts/`. They use
+`jq` for JSON creation and append durable events to the campaign manifest.
+
+| Script | Required inputs | Writes | Stdout |
+| --- | --- | --- | --- |
+| `init-campaign.sh` | `--campaign-id`, `--name`, `--objective` | `campaign.json`, standard subdirectories, initial manifest entry | Campaign directory path |
+| `generate-video.sh` | `--campaign-id`, `--prompt` | `video_generation` manifest entry | Planned or executed generation entry JSON |
+| `build-package.sh` | `--campaign-id`, `--platform` | Package JSON under `packages/`, `package` manifest entry | Package file path |
+| `export-queue.sh` | `--campaign-id` | Queue JSON under `queue/`, `export_queue` manifest entry | Queue file path |
+| `import-metrics.sh` | `--campaign-id`, `--platform`, `--metrics-file` | Normalized metrics JSON under `metrics/`, `metrics` manifest entry | Imported metrics path |
+| `summarize-performance.sh` | `--campaign-id` | Nothing | Aggregate feedback JSON |
+
+Interface constraints implemented by the scripts:
+
+- Campaign IDs must match `^[a-z0-9][a-z0-9._-]*$`.
+- `init-campaign.sh --platforms` is comma-separated and defaults to
+  `instagram,youtube-short`.
+- Platform names must exist in `config/platforms.json`.
+- `generate-video.sh` always passes `--async` to
+  `library/social/social-media-video/scripts/run-social-video.sh`.
+- Arguments after `generate-video.sh --` are forwarded to the parent social
+  video script; unknown arguments before `--` are also appended to that command.
+- `build-package.sh` uses the latest `video_generation` entry unless
+  `--source-run-id` is supplied.
+- `export-queue.sh` exports all package files by default, or only files matching
+  `*_<platform>.json` when `--platform` is supplied.
+- `import-metrics.sh` copies any valid JSON shape, but `summarize-performance.sh`
+  only totals numeric `views`, `likes`, `comments`, `shares`, and `saves`.
+
+## Environment and path behavior
+
+The shared helper in `scripts/lib.sh` resolves paths once and all scripts use the
+same values:
+
+| Variable | Default | Use |
+| --- | --- | --- |
+| `GENERATIVE_MEDIA_SKILLS_ROOT` | Parent directory of `social-media-engine/` | Locates `library/social/social-media-video/scripts/run-social-video.sh` when the engine is split into another repo |
+| `SOCIAL_ENGINE_CAMPAIGNS_DIR` | `social-media-engine/campaigns` | Stores campaign state, packages, queues, metrics, and briefs |
+| `MUAPI_KEY` | Read by the parent generation script | Required only when `generate-video.sh --run` actually spends generation credits |
+
+Use `SOCIAL_ENGINE_CAMPAIGNS_DIR` for tests, CI smoke checks, or any workflow
+that should not write into real campaign state. Use `GENERATIVE_MEDIA_SKILLS_ROOT`
+only when this folder is checked out separately from the media skill library.
+
+## Extending platform defaults
+
+Add or update platforms in `config/platforms.json`. Each platform entry should
+include:
+
+- `label`: human-readable platform name.
+- `aspect`: default aspect ratio passed into generation/package metadata.
+- `duration_seconds`: default duration used when `--duration` is omitted.
+- `format`: operator-facing content format label.
+- `safe_zone`: upload guidance copied into packages.
+- `package_fields`: metadata fields operators should fill before export.
+- `publishing`: currently `export`, because publishing adapters are not part of
+  this engine yet.
+
+After changing platform defaults:
+
+1. Validate JSON with `jq empty social-media-engine/config/platforms.json`.
+2. Plan a generation without `--run` for the new platform.
+3. Build a package and confirm `platform_defaults` contains the expected aspect,
+   duration, and safe-zone guidance.
+4. If the platform name is not supported by
+   `library/social/social-media-video/scripts/run-social-video.sh`, pass explicit
+   `--aspect` and `--duration` values or update that parent script as well.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `Error: jq is required.` | `jq` is not installed or not on `PATH`. | Install `jq` before running engine scripts. |
+| `Campaign '<id>' does not exist.` | A script ran before campaign initialization, or `SOCIAL_ENGINE_CAMPAIGNS_DIR` points elsewhere. | Run `init-campaign.sh` or check the campaigns directory environment variable. |
+| `Unknown platform '<name>'.` | The platform key is missing from `config/platforms.json`. | Add the platform default or use an existing platform key. |
+| `Social video script not found...` | `GENERATIVE_MEDIA_SKILLS_ROOT` is unset or points at the wrong directory after repo extraction. | Set it to the root containing `library/social/social-media-video/`. |
+| `No video_generation manifest entry found...` | A package was requested before planning/running generation. | Run `generate-video.sh` first, or pass a valid `--source-run-id`. |
+| `No package files found.` | Queue export ran before package creation or with a platform filter that matches no package. | Run `build-package.sh` or remove/fix the `--platform` filter. |
+| `MUAPI_KEY is not set.` | `generate-video.sh --run` delegated to the parent generator without credentials. | Export `MUAPI_KEY` or add it to the media skill root `.env`; omit `--run` for ledger-only planning. |
+
 ## Testing
 
 ### Syntax and JSON validation
