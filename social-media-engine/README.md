@@ -136,9 +136,9 @@ The engine always invokes the parent social video script with `--async`.
 Therefore a `status: "completed"` generation entry means the request was
 submitted and the JSON response was recorded; it does not guarantee a finished
 video URL. Poll the returned request ID with `muapi predict wait` or
-`core/platform/check-result.sh`; `build-package.sh` will not include a
-`media.video_url` until a completed output URL or local file is present in the
-source manifest entry.
+`core/platform/check-result.sh`; `build-package.sh` will leave
+`media.video_url` empty until a completed output URL is present in the source
+manifest entry.
 
 ### Publisher layer
 

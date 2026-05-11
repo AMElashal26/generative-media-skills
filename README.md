@@ -79,10 +79,10 @@ muapi auth configure --api-key "YOUR_MUAPI_KEY"
 # Get your key at https://muapi.ai/dashboard
 ```
 
-Shell scripts in this repository read `MUAPI_KEY` from the environment or from
-`.env` at the repository root. The MCP server example below uses
-`MUAPI_API_KEY`; export `MUAPI_KEY` separately or keep both names in sync if you
-run both workflows.
+Shell scripts in this repository read `MUAPI_KEY` from the environment; some
+wrappers also source `.env` from the repository root or current working
+directory. The MCP server example below uses `MUAPI_API_KEY`; export
+`MUAPI_KEY` separately or keep both names in sync if you run both workflows.
 
 ### 3. Install the Skills
 

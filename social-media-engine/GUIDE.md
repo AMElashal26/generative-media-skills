@@ -188,8 +188,8 @@ Important async behavior:
   `bash core/platform/check-result.sh --id <request-id>` before relying on a
   final video URL.
 - The current engine does not hydrate a completed async result back into the
-  manifest. `build-package.sh` will not include `media.video_url` until a
-  completed output URL or local file is present in the source generation entry.
+  manifest. `build-package.sh` will leave `media.video_url` empty until a
+  completed output URL is present in the source generation entry.
 
 ### 4. Build a platform package
 
@@ -424,12 +424,14 @@ bash social-media-engine/scripts/generate-video.sh \
 Use this sparingly. Most engine changes should be validated through planned
 runs, package output, queue output, and metrics summaries.
 
-Because generation is submitted asynchronously, capture the returned request ID
-from the manifest entry and poll it before expecting a downloadable video:
+Because generation is submitted asynchronously, keep the campaign directory
+available, capture the returned request ID from the manifest entry, and poll it
+before expecting a downloadable video:
 
 ```bash
+CAMPAIGNS_DIR="${SOCIAL_ENGINE_CAMPAIGNS_DIR:-social-media-engine/campaigns}"
 REQUEST_ID=$(jq -r 'select(.kind == "video_generation") | .outputs.request_id // empty' \
-  "$SOCIAL_ENGINE_CAMPAIGNS_DIR/smoke/manifest.jsonl" | tail -n 1)
+  "$CAMPAIGNS_DIR/smoke/manifest.jsonl" | tail -n 1)
 
 bash core/platform/check-result.sh --id "$REQUEST_ID"
 ```
