@@ -141,13 +141,17 @@ quota, account eligibility, and review requirements.
 
 ## Platform defaults
 
-Defaults live in `config/platforms.json`. The current short-form baseline is
-9:16 vertical video for Instagram Reels, YouTube Shorts, TikTok, and Threads.
+Defaults live in `config/platforms.json`. The current catalog covers 9:16
+vertical formats for Instagram Reels, YouTube Shorts, TikTok, and Threads, plus
+a 16:9 LinkedIn package target. See [GUIDE.md](./GUIDE.md#platform-reference)
+for platform keys, default durations, safe-zone notes, and package fields.
 
 ## Requirements
 
 - Bash 3.2+
 - `jq`
 - The parent `generative-media-skills` repo or `GENERATIVE_MEDIA_SKILLS_ROOT`
+- Optional: `SOCIAL_ENGINE_CAMPAIGNS_DIR` when campaign state should live outside
+  `social-media-engine/campaigns`
 - `MUAPI_KEY` configured if actually generating media
 
