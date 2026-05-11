@@ -66,6 +66,14 @@ export GENERATIVE_MEDIA_SKILLS_ROOT=/path/to/generative-media-skills
 
 When kept inside this repository, scripts auto-detect the parent directory.
 
+Campaign state is written to `social-media-engine/campaigns` by default. Set
+`SOCIAL_ENGINE_CAMPAIGNS_DIR` when running tests, CI jobs, or separate campaign
+workspaces that should not write into the repository tree:
+
+```bash
+export SOCIAL_ENGINE_CAMPAIGNS_DIR=/tmp/social-engine-campaigns
+```
+
 ## Lifecycle
 
 ### 1. Initialize a campaign
@@ -93,6 +101,18 @@ Why this matters:
 - Later steps can validate the campaign exists.
 - All future outputs have a stable campaign ID.
 - Multiple campaigns can run independently.
+
+Campaign file shapes:
+
+- `init-campaign.sh` writes the minimal tool-managed shape: `campaign_id`,
+  `name`, `objective`, `platforms`, `created_at`, `notes`, `brand_files: []`,
+  and `cadence: "manual"`.
+- `schemas/campaign.schema.json` allows additional custom keys, but declared
+  fields still keep their schema types. If you enforce the schema, keep
+  `brand_files` as an array of string paths and `cadence` as a string.
+- `config/campaign.example.json` is a richer planning example. Use it as a
+  source of campaign ideas, then keep any strict validation requirements aligned
+  with the schema before committing generated campaign files.
 
 ### 2. Plan a generation
 
@@ -147,6 +167,28 @@ Why this matters:
 - Failures are still useful because the attempted command is recorded.
 - Future tooling can poll request IDs or hydrate output URLs from the manifest.
 
+Generation controls:
+
+- `--platform` must be a key in `config/platforms.json`; this gives the engine
+  a known aspect ratio and duration before it calls the parent social video
+  skill.
+- `--camera`, `--mode`, `--tier`, `--quality`, `--duration`, and `--aspect`
+  are copied into the assembled
+  `library/social/social-media-video/scripts/run-social-video.sh` command.
+- Arguments after `--` pass through to the parent social video script. Use this
+  for options such as generated references, existing image files, fast queue
+  mode, or viewing outputs without adding more engine flags:
+
+```bash
+bash social-media-engine/scripts/generate-video.sh \
+  --campaign-id coldbrew-launch \
+  --platform tiktok \
+  --camera fpv \
+  --prompt "First-person rush through a chilled brew bar..." \
+  --run \
+  -- --gen-ref "Cold brew can on chrome counter, high contrast" --tier global
+```
+
 ### 4. Build a platform package
 
 Use `build-package.sh` after planning or running a generation. It uses the latest
@@ -174,6 +216,25 @@ Why this matters:
 - Upload details stay separate from generation details.
 - One generated asset can have different packages for different platforms.
 - Manual or automated publishing can consume the same package format.
+
+### Platform reference
+
+`config/platforms.json` is the source of truth for supported engine platform
+keys. `build-package.sh` always writes the same `upload` object, but these
+fields are the ones each platform currently asks operators to fill.
+
+| Platform key | Default format | Default duration | Package fields | `build-package.sh` flags |
+| --- | --- | ---: | --- | --- |
+| `instagram` | 9:16 vertical short | 10s | `caption`, `hashtags`, `cta`, `thumbnail_prompt` | `--caption`, `--hashtags`, `--cta`, `--thumbnail-prompt` |
+| `youtube-short` | 9:16 vertical short | 15s | `title`, `description`, `hashtags`, `thumbnail_prompt` | `--title`, `--description`, `--hashtags`, `--thumbnail-prompt` |
+| `tiktok` | 9:16 vertical short | 10s | `caption`, `hashtags`, `sound_note`, `cta` | `--caption`, `--hashtags`, `--sound-note`, `--cta` |
+| `threads` | 9:16 text plus media | 10s | `post_text`, `hashtags`, `alt_text`, `reply_prompt` | `--post-text`, `--hashtags`, `--alt-text`, `--reply-prompt` |
+| `linkedin` | 16:9 professional video | 10s | `post_text`, `hashtags`, `cta` | `--post-text`, `--hashtags`, `--cta` |
+
+Safe-zone guidance is copied from the platform config into
+`package.platform_defaults.safe_zone`. Review that text before writing captions,
+text overlays, or calls to action; LinkedIn is currently landscape while the
+other configured platforms are vertical.
 
 ### 5. Export a manual publishing queue
 

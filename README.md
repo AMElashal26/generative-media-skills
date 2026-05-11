@@ -41,6 +41,15 @@ High-value skills that translate creative intent into technical directives.
 - **Logo Creator** (`/library/visual/logo-creator/`) — Minimalist vector branding (Geometric Primitives).
 - **Seedance 2 (Doubao Video)** (`/library/motion/seedance-2/`) — Director-level cinematic video generation with text-to-video, image-to-video, and video extension with native audio-video sync.
 
+### 📣 Social Media Engine (`/social-media-engine`)
+
+A campaign operating layer that records planned or executed social video runs,
+builds platform upload packages, exports manual publishing queues, and imports
+metrics for future prompt feedback. See
+[`social-media-engine/README.md`](./social-media-engine/README.md) for the
+quick start and [`GUIDE.md`](./social-media-engine/GUIDE.md) for the operating
+model.
+
 ---
 
 ## 🚀 Quick Start
