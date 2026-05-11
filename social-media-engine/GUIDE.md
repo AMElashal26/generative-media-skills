@@ -112,7 +112,9 @@ Campaign file shapes:
   `brand_files` as an array of string paths and `cadence` as a string.
 - `config/campaign.example.json` is a richer planning example. Use it as a
   source of campaign ideas, then keep any strict validation requirements aligned
-  with the schema before committing generated campaign files.
+  with the schema before committing generated campaign files. As checked in, the
+  example's `brand_files` and `cadence` objects are illustrative and need to be
+  adapted before validating against `campaign.schema.json`.
 
 ### 2. Plan a generation
 
@@ -217,7 +219,7 @@ Why this matters:
 - One generated asset can have different packages for different platforms.
 - Manual or automated publishing can consume the same package format.
 
-### Platform reference
+#### Platform reference
 
 `config/platforms.json` is the source of truth for supported engine platform
 keys. `build-package.sh` always writes the same `upload` object, but these

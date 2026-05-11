@@ -151,7 +151,7 @@ for platform keys, default durations, safe-zone notes, and package fields.
 - Bash 3.2+
 - `jq`
 - The parent `generative-media-skills` repo or `GENERATIVE_MEDIA_SKILLS_ROOT`
-- `SOCIAL_ENGINE_CAMPAIGNS_DIR` when campaign state should live outside
+- Optional: `SOCIAL_ENGINE_CAMPAIGNS_DIR` when campaign state should live outside
   `social-media-engine/campaigns`
 - `MUAPI_KEY` configured if actually generating media
 
