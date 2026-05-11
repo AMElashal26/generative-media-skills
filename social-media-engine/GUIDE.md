@@ -94,6 +94,11 @@ Why this matters:
 - All future outputs have a stable campaign ID.
 - Multiple campaigns can run independently.
 
+`config/campaign.example.json` is an illustrative richer campaign brief. The
+canonical starter shape is the `campaign.json` written by `init-campaign.sh`,
+which matches `schemas/campaign.schema.json` with `brand_files: []`,
+`cadence: "manual"`, and a generated `created_at` timestamp.
+
 ### 2. Plan a generation
 
 By default, `generate-video.sh` records a planned command without spending MuAPI
@@ -121,6 +126,32 @@ Why this matters:
 - Content calendars can be planned as ledger entries.
 - The exact eventual generation command is preserved.
 
+Supported generation options:
+
+| Option | Effect |
+| --- | --- |
+| `--camera TYPE` | Passes the social video camera preset, such as `product`, `drone`, `fpv`, or `reveal`. |
+| `--mode MODE` | Passes `t2v`, `i2v`, `first-last`, or `omni` to the social video script. |
+| `--tier TIER` | Passes `chinese`, `global`, or `vip`. The parent script defaults to `chinese`. |
+| `--quality Q` | Passes `basic` or `high`; quality is used by the Chinese tier. |
+| `--duration N` | Overrides the platform duration from `config/platforms.json`. |
+| `--aspect RATIO` | Overrides the platform aspect from `config/platforms.json`. |
+| `--run` | Executes the generated command instead of only recording it. |
+| `--` | Sends all following arguments directly to `run-social-video.sh`. |
+
+Example with reference-frame generation passed through to the parent skill:
+
+```bash
+bash social-media-engine/scripts/generate-video.sh \
+  --campaign-id coldbrew-launch \
+  --platform instagram \
+  --camera product \
+  --mode i2v \
+  --prompt "0-3s: macro cold brew bottle reveal..." \
+  -- --gen-ref "Cold brew bottle on black marble, gold rim light" \
+  --ref-model google-imagen4-fast
+```
+
 ### 3. Execute a generation
 
 Add `--run` when you want to call the parent media generation script.
@@ -145,7 +176,20 @@ Why this matters:
 
 - The engine keeps orchestration and lineage while generation remains delegated.
 - Failures are still useful because the attempted command is recorded.
-- Future tooling can poll request IDs or hydrate output URLs from the manifest.
+- The recorded JSON response preserves the async request ID for polling.
+
+Important async behavior:
+
+- `generate-video.sh` always adds `--async` when it invokes
+  `library/social/social-media-video/scripts/run-social-video.sh`.
+- A `status: "completed"` generation entry means the request was submitted and
+  the submit response was valid JSON; the media may still be rendering.
+- Poll the request ID with `muapi predict wait <request-id>` or
+  `bash core/platform/check-result.sh --id <request-id>` before relying on a
+  final video URL.
+- The current engine does not hydrate a completed async result back into the
+  manifest. `build-package.sh` will not include `media.video_url` until a
+  completed output URL or local file is present in the source generation entry.
 
 ### 4. Build a platform package
 
@@ -168,6 +212,12 @@ What happens:
 - Platform defaults, safe-zone guidance, caption fields, source prompt, source
   run ID, media URL, and local file path are included when available.
 - A `package` entry is appended to `manifest.jsonl`.
+
+`build-package.sh` reads media from the source generation entry at
+`.outputs.video_url`, `.outputs.raw.outputs[0]`, or `.outputs.local_file`. A
+planned run or freshly submitted async run can produce a package with empty
+`media.video_url`; use that package as metadata draft until the async result is
+resolved.
 
 Why this matters:
 
@@ -373,6 +423,16 @@ bash social-media-engine/scripts/generate-video.sh \
 
 Use this sparingly. Most engine changes should be validated through planned
 runs, package output, queue output, and metrics summaries.
+
+Because generation is submitted asynchronously, capture the returned request ID
+from the manifest entry and poll it before expecting a downloadable video:
+
+```bash
+REQUEST_ID=$(jq -r 'select(.kind == "video_generation") | .outputs.request_id // empty' \
+  "$SOCIAL_ENGINE_CAMPAIGNS_DIR/smoke/manifest.jsonl" | tail -n 1)
+
+bash core/platform/check-result.sh --id "$REQUEST_ID"
+```
 
 ## When to use each step
 
