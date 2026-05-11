@@ -36,10 +36,17 @@ Thin wrappers around `[muapi-cli](https://github.com/SamurAIGPT/muapi-cli)` for 
 High-value skills that translate creative intent into technical directives.
 
 - **Cinema Director** (`/library/motion/cinema-director/`) — Technical film direction & cinematography.
+- **Social Media Video** (`/library/social/social-media-video/`) — Brand-aware post copy, storyboard, reference-frame, and Seedance video workflow for social platforms.
 - **Nano-Banana** (`/library/visual/nano-banana/`) — Reasoning-driven image generation (Gemini 3 Style).
 - **UI Designer** (`/library/visual/ui-design/`) — High-fidelity mobile/web mockups (Atomic Design).
 - **Logo Creator** (`/library/visual/logo-creator/`) — Minimalist vector branding (Geometric Primitives).
 - **Seedance 2 (Doubao Video)** (`/library/motion/seedance-2/`) — Director-level cinematic video generation with text-to-video, image-to-video, and video extension with native audio-video sync.
+
+### Social Media Engine (`/social-media-engine`)
+
+An optional operating layer for campaigns, append-only manifests, platform
+packages, manual publishing queues, and metrics imports. Use it when you need a
+repeatable social content workflow around the media generation skills.
 
 ---
 
@@ -71,6 +78,11 @@ muapi auth configure --api-key "YOUR_MUAPI_KEY"
 
 # Get your key at https://muapi.ai/dashboard
 ```
+
+Shell scripts in this repository read `MUAPI_KEY` from the environment; some
+wrappers also source `.env` from the repository root or current working
+directory. The MCP server example below uses `MUAPI_API_KEY`; export
+`MUAPI_KEY` separately or keep both names in sync if you run both workflows.
 
 ### 3. Install the Skills
 
@@ -112,10 +124,8 @@ bash library/visual/nano-banana/scripts/generate-nano-art.sh \
 ### 6. Direct a Cinematic Scene
 
 ```bash
-cd library/motion/cinema-director
-
 # Create a 10-second epic reveal
-bash scripts/generate-film.sh \
+bash library/motion/cinema-director/scripts/generate-film.sh \
   --subject "a cybernetic dragon over Tokyo" \
   --intent "epic" \
   --model "kling-v3.0-pro" \

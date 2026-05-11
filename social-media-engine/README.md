@@ -56,6 +56,12 @@ bash social-media-engine/scripts/export-queue.sh \
   --campaign-id coldbrew-launch
 ```
 
+`generate-video.sh` accepts `--camera`, `--mode`, `--tier`, `--quality`,
+`--duration`, and `--aspect` before the optional `--run` flag. Arguments after
+`--` are passed directly to
+`library/social/social-media-video/scripts/run-social-video.sh`, for example
+`-- --gen-ref "product on black marble" --ref-model google-imagen4-fast`.
+
 To inspect the feedback loop after importing metrics:
 
 ```bash
@@ -126,6 +132,14 @@ episode briefs or variants before invoking `generate-video.sh`.
 default. Add `--run` only when you want to spend generation credits and capture
 the parent generation response in the ledger.
 
+The engine always invokes the parent social video script with `--async`.
+Therefore a `status: "completed"` generation entry means the request was
+submitted and the JSON response was recorded; it does not guarantee a finished
+video URL. Poll the returned request ID with `muapi predict wait` or
+`core/platform/check-result.sh`; `build-package.sh` will leave
+`media.video_url` empty until a completed output URL is present in the source
+manifest entry.
+
 ### Publisher layer
 
 `export-queue.sh` produces manual publishing queue files. Official API adapters
@@ -143,6 +157,8 @@ quota, account eligibility, and review requirements.
 
 Defaults live in `config/platforms.json`. The current short-form baseline is
 9:16 vertical video for Instagram Reels, YouTube Shorts, TikTok, and Threads.
+When using the social video script directly, pass `--aspect 9:16` for `threads`;
+the engine already passes the configured aspect and duration overrides.
 
 ## Requirements
 

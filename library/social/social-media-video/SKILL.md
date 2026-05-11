@@ -122,6 +122,8 @@ bash core/media/generate-image.sh \
 ### Step 5 — Generate the Video
 
 Choose mode, tier, and camera based on content type and available assets.
+The script defaults to `--mode t2v`, `--tier chinese`, `--quality basic`, and
+`--platform instagram`.
 
 **Mode selection:**
 
@@ -131,6 +133,7 @@ Choose mode, tier, and camera based on content type and available assets.
 | 1 image (first frame) | `i2v` | `--mode i2v --file ref.jpg` |
 | Start + end frames | `first-last` | `--mode first-last --tier global --file start.jpg --file end.jpg` |
 | Multi-ref blend | `i2v` | up to 9 images |
+| Omni reference | `omni` | `--mode omni --tier global --file ref.jpg` |
 
 **Invoke the script:**
 ```bash
@@ -138,13 +141,27 @@ bash library/social/social-media-video/scripts/run-social-video.sh \
   --prompt "your director brief here" \
   --platform instagram \
   --camera drone \
-  [--mode t2v|i2v|first-last] \
+  [--mode t2v|i2v|first-last|omni] \
   [--file ref_image.jpg] \
   [--gen-ref "reference image prompt"] \
+  [--gen-ref-last "ending reference prompt"] \
+  [--ref-model google-imagen4-ultra] \
   [--tier global] \
   [--quality high] \
+  [--fast] \
+  [--async] \
   [--view]
 ```
+
+Useful flags:
+
+| Flag | Behavior |
+|:---|:---|
+| `--async` | Return the MuAPI submit response with `request_id` instead of waiting for the finished video. |
+| `--fast` | Use the fast queue variant for global/vip Seedance endpoints. |
+| `--gen-ref TEXT` | Generate a first-frame reference image before video generation. |
+| `--gen-ref-last TEXT` | Generate a last-frame reference image and switch to `first-last` mode. |
+| `--ref-model MODEL` | Choose the image model for generated references; default is `google-imagen4-ultra`. |
 
 ---
 
@@ -160,8 +177,12 @@ bash library/social/social-media-video/scripts/run-social-video.sh \
 | Twitter/X | Landscape | 16:9 | 10s | Punchy, direct |
 | YouTube (long) | Landscape | 16:9 | 15s | Cinematic, slow builds |
 | Pinterest | Portrait | 4:3 | 10s | Lifestyle-forward |
+| Threads | Vertical | 9:16 | 10s | Pass `--aspect 9:16`; direct script calls otherwise use generic defaults |
 
-> **Tier note:** Use `--tier global` or `--tier vip` for `1:1` and `21:9` formats. Chinese tier supports only 16:9, 9:16, 4:3, 3:4.
+> **Tier note:** The script defaults to `--tier chinese`. Use `--tier global` or
+> `--tier vip` for `1:1` and `21:9` formats; the script automatically switches
+> from Chinese to global for those aspects and for `--gen-ref-last`.
+> Chinese tier supports only 16:9, 9:16, 4:3, 3:4.
 
 ---
 
@@ -175,8 +196,8 @@ bash library/social/social-media-video/scripts/run-social-video.sh \
 | `epic` | Dolly in + orbit, low hero angle | Brand manifesto, emotional story |
 | `product` | Static macro orbit, precision reveal | E-commerce, product demo |
 | `narrative` | Tracking shot, Steadicam | Testimonials, story-driven |
-| `tense` | Handheld jitter, dutch angle | High-energy, urgency |
-| `comedy` | Reactive handheld, punchy zooms | Lighthearted brand content |
+| `tracking` | Tracking shot, Steadicam | Alias for `narrative` |
+| `orbit` | Hero orbit movement | Alias for `epic` |
 
 ### Specialty Camera Intents (New)
 
@@ -185,6 +206,10 @@ bash library/social/social-media-video/scripts/run-social-video.sh \
 | `fpv` | First-person subjective POV — immersive GoPro-style, continuous forward motion, peripheral detail close-ups | Action brands, travel, sports, tech demos |
 | `drone` | Aerial cinematic flythrough — smooth gimbal-stabilized, sweeping laterals, descend from high altitude into scene | Real estate, luxury, outdoor brands, epic reveals |
 | `flythrough` | Ground-level architectural flythrough — continuous dolly through space, seamless portal transitions | Architecture, interior design, venue showcases |
+
+Unsupported camera names fall back to the script's generic `cinematic` intent.
+If you need a tense, comedic, or other custom motion style, describe it in the
+director prompt itself instead of relying on `--camera`.
 
 **FPV Prompt Enrichment:**
 ```
