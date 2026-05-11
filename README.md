@@ -124,10 +124,8 @@ bash library/visual/nano-banana/scripts/generate-nano-art.sh \
 ### 6. Direct a Cinematic Scene
 
 ```bash
-cd library/motion/cinema-director
-
 # Create a 10-second epic reveal
-bash scripts/generate-film.sh \
+bash library/motion/cinema-director/scripts/generate-film.sh \
   --subject "a cybernetic dragon over Tokyo" \
   --intent "epic" \
   --model "kling-v3.0-pro" \

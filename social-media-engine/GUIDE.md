@@ -414,27 +414,35 @@ does not execute generation unless `--run` is passed.
 Only run this when `MUAPI_KEY` is configured and you intend to spend credits:
 
 ```bash
+TMPDIR=$(mktemp -d)
+export SOCIAL_ENGINE_CAMPAIGNS_DIR="$TMPDIR/campaigns"
+
+bash social-media-engine/scripts/init-campaign.sh \
+  --campaign-id smoke-live \
+  --name "Smoke Live Test" \
+  --objective "Verify live social engine generation" \
+  --platforms instagram
+
 bash social-media-engine/scripts/generate-video.sh \
-  --campaign-id smoke \
+  --campaign-id smoke-live \
   --platform instagram \
   --prompt "0-3s: simple branded product reveal" \
-  --run
+  --run \
+  > "$TMPDIR/live-video.json"
+
+CAMPAIGNS_DIR="${SOCIAL_ENGINE_CAMPAIGNS_DIR:-social-media-engine/campaigns}"
+REQUEST_ID=$(jq -r 'select(.kind == "video_generation") | .outputs.request_id // empty' \
+  "$CAMPAIGNS_DIR/smoke-live/manifest.jsonl" | tail -n 1)
+
+bash core/platform/check-result.sh --id "$REQUEST_ID"
+
+rm -rf "$TMPDIR"
 ```
 
 Use this sparingly. Most engine changes should be validated through planned
-runs, package output, queue output, and metrics summaries.
-
-Because generation is submitted asynchronously, keep the campaign directory
-available, capture the returned request ID from the manifest entry, and poll it
-before expecting a downloadable video:
-
-```bash
-CAMPAIGNS_DIR="${SOCIAL_ENGINE_CAMPAIGNS_DIR:-social-media-engine/campaigns}"
-REQUEST_ID=$(jq -r 'select(.kind == "video_generation") | .outputs.request_id // empty' \
-  "$CAMPAIGNS_DIR/smoke/manifest.jsonl" | tail -n 1)
-
-bash core/platform/check-result.sh --id "$REQUEST_ID"
-```
+runs, package output, queue output, and metrics summaries. Generation is
+submitted asynchronously, so poll the request ID before expecting a downloadable
+video.
 
 ## When to use each step
 
